@@ -107,13 +107,40 @@ class database():
         except ValueError as valerr:
             print("[+] You must give some values")
 
+    def update(self, table_name="", attributes=(), new_values=(), where=None, show_query=False):
+        """Perfom an update query"""
+        if type(attributes) is str: #Meaning that there is only on attribute to update
+            if where is not None:
+                sql = "UPDATE {} SET {} = %s WHERE {}".format(table_name,attributes,where)
+            else:
+                sql = "UPDATE {} SET {} = %s".format(table_name,attributes,where)
+        else:
+            sql = "UPDATE {} SET ".format(table_name)
+            for att in attributes:
+                if att == attributes[-1]:
+                    sql += "{} = %s ".format(att)
+                else:
+                    sql += "{} = %s, ".format(att)
+            if where is not None:
+                sql += " WHERE {}".format(where)
+        if show_query == True:
+            print("[+] The perfomed query is : {}".format(sql))
+
+        try:
+             self.cursor.execute(sql,val)
+             self.db.commit()
+             print("[+] {} record(s) affected".format(self.cursor.rowcount))
+        except mysql.connector.Error as err:
+            print("[+] This error occured while attempting to connect to the database : {}".format(err))
+
+
 
 
 #### DEBUG
 #I created a database called test and a table called customers with two row: name and adress, both varchar
 if __name__ == '__main__':
 
-    #db = database("YOUR USER","YOUR PASSWORD","YOUR DATABASE")
+    db = database("test","test","test")
     columns = ("name","address")
     val = [("John", "Highway 21")]
     vals = [
@@ -131,7 +158,9 @@ if __name__ == '__main__':
   ('Chuck', 'Main Road 989'),
   ('Viola', 'Sideway 1633')
 ]
-    db.insert("customers", columns, vals, show_query=True)
-    result = db.select(select="*", fm="customers")
-    for row in result:
-        print(row)
+    #db.insert("test", columns, vals, show_query=True)
+    #result = db.select(select="*", fm="test")
+    # for row in result:
+    #     print(row)
+
+    db.update(table_name="test",attributes=("name"),new_values=("yolo"),where="name = 'Amy'", show_query=True)
