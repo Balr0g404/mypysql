@@ -38,10 +38,6 @@ class database():
         """Print some infos about the database"""
         return "Database '{}' with {} tables.".format(self.name, len(self.tables))
 
-    def help():
-        """Print some help about the class"""
-        pass
-
     def show_tables(self):
         """list all the tables from the database"""
         for table in self.tables:
@@ -107,31 +103,53 @@ class database():
         except ValueError as valerr:
             print("[+] You must give some values")
 
-    def update(self, table_name="", attributes=(), new_values=(), where=None, show_query=False):
-        """Perfom an update query"""
-        if type(attributes) is str: #Meaning that there is only on attribute to update
-            if where is not None:
-                sql = "UPDATE {} SET {} = %s WHERE {}".format(table_name,attributes,where)
+
+    def update(self, table_name="", attributes="", new_value="", where=None, show_query=False):
+        """Perfom an update query on one attribute"""
+        if where is not None:
+            if type(new_value) is str:
+                sql = "UPDATE {} SET {} = '{}' WHERE {}".format(table_name,attributes, new_value, where)
             else:
-                sql = "UPDATE {} SET {} = %s".format(table_name,attributes,where)
+                sql = "UPDATE {} SET {} = {} WHERE {}".format(table_name,attributes, new_value, where)
         else:
-            sql = "UPDATE {} SET ".format(table_name)
-            for att in attributes:
-                if att == attributes[-1]:
-                    sql += "{} = %s ".format(att)
-                else:
-                    sql += "{} = %s, ".format(att)
-            if where is not None:
-                sql += " WHERE {}".format(where)
+            sql = "UPDATE {} SET {} = {}".format(table_name,attributes, new_value)
+
         if show_query == True:
             print("[+] The perfomed query is : {}".format(sql))
 
         try:
-             self.cursor.execute(sql,val)
-             self.db.commit()
-             print("[+] {} record(s) affected".format(self.cursor.rowcount))
+            self.cursor.execute(sql)
+            self.db.commit()
+            print("[+] {} record(s) affected".format(self.cursor.rowcount))
         except mysql.connector.Error as err:
             print("[+] This error occured while attempting to connect to the database : {}".format(err))
+
+    def truncate(self, table_name="", show_query=False):
+        """Truncate the table"""
+        sql = "TRUNCATE {}".format(table_name)
+        if show_query == True:
+            print("[+] The perfomed query is : {}".format(sql))
+
+        try:
+            self.cursor.execute(sql)
+            self.db.commit()
+            print("[+]Done")
+        except mysql.connector.Error as err:
+            print("[+] This error occured while attempting to connect to the database : {}".format(err))
+
+    def delete(self, table_name="", where=None):
+        """Perform a delete query"""
+        if type(where) is None:
+            sql = "DELETE FROM {}".format(table_name)
+        else:
+            sql = "DELETE FROM {} WHERE {}".format(table_name, where)
+
+            try:
+                self.cursor.execute(sql)
+                self.db.commit()
+                print("[+] {} record(s) deleted".format(self.cursor.rowcount))
+            except mysql.connector.Error as err:
+                print("[+] This error occured while attempting to connect to the database : {}".format(err))
 
 
 
@@ -158,9 +176,11 @@ if __name__ == '__main__':
   ('Chuck', 'Main Road 989'),
   ('Viola', 'Sideway 1633')
 ]
-    #db.insert("test", columns, vals, show_query=True)
-    #result = db.select(select="*", fm="test")
-    # for row in result:
-    #     print(row)
+    db.insert("test", columns, vals, show_query=True)
+    result = db.select(select="*", fm="test")
+    for row in result:
+        print(row)
 
-    db.update(table_name="test",attributes=("name"),new_values=("yolo"),where="name = 'Amy'", show_query=True)
+    #db.update(table_name="test",attributes="name",new_value="TEST",where="address = 'Apple st 652'", show_query=True)
+    #db.truncate(table_name="test", show_query=True)
+    #db.delete(table_name="test",where="name='Ben'")
